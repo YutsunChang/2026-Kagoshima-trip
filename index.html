@@ -1,0 +1,913 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="鹿兒島">
+  <meta name="theme-color" content="#f7f2e8">
+  <title>2026 鹿兒島之旅</title>
+  <style>
+    :root {
+      --ink: #2f3332;
+      --muted: #727875;
+      --line: #e7ded2;
+      --card: #fffdf8;
+      --bg: #f7f2e8;
+      --primary: #2f6f73;
+      --accent: #c7653d;
+      --green: #5f8f5f;
+      --shadow: 0 10px 30px rgba(73, 54, 33, 0.1);
+      --radius: 14px;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 20% 0%, rgba(199, 101, 61, 0.16), transparent 30%),
+        linear-gradient(180deg, #fffaf1 0%, var(--bg) 48%, #eef5ef 100%);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", sans-serif;
+      padding-bottom: calc(78px + env(safe-area-inset-bottom));
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .hero {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      padding: calc(14px + env(safe-area-inset-top)) 18px 12px;
+      background: rgba(255, 250, 241, 0.92);
+      backdrop-filter: blur(18px);
+      border-bottom: 1px solid rgba(231, 222, 210, 0.8);
+    }
+
+    .hero-main {
+      max-width: 760px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 1.38rem;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 0.86rem;
+      font-weight: 650;
+    }
+
+    .mark {
+      width: 54px;
+      height: 54px;
+      border-radius: 16px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(145deg, #fff 0%, #f3dcc7 100%);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .mark svg { width: 48px; height: 48px; }
+
+    .tabs {
+      max-width: 760px;
+      margin: 12px auto 0;
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .tabs::-webkit-scrollbar { display: none; }
+
+    .tab {
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.76);
+      color: var(--muted);
+      border-radius: 12px;
+      min-width: 58px;
+      min-height: 52px;
+      padding: 7px 12px;
+      display: grid;
+      place-items: center;
+      gap: 2px;
+      flex: 0 0 auto;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .tab small {
+      font-size: 0.7rem;
+      font-weight: 700;
+    }
+
+    .tab.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    main {
+      width: min(100%, 760px);
+      margin: 0 auto;
+      padding: 18px;
+    }
+
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    .day-title {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 6px 2px 14px;
+    }
+
+    .day-title h2 {
+      margin: 0;
+      font-size: 1.05rem;
+    }
+
+    .day-title span {
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 650;
+      white-space: nowrap;
+    }
+
+    .card {
+      position: relative;
+      display: grid;
+      grid-template-columns: 68px 1fr;
+      gap: 13px;
+      margin-bottom: 12px;
+      padding: 15px;
+      overflow: hidden;
+      border: 1px solid rgba(231, 222, 210, 0.9);
+      border-radius: var(--radius);
+      background: rgba(255, 253, 248, 0.94);
+      box-shadow: 0 5px 18px rgba(73, 54, 33, 0.06);
+    }
+
+    .time {
+      padding-right: 12px;
+      border-right: 1px dashed #d8cabb;
+      color: var(--primary);
+      font-weight: 900;
+      line-height: 1.2;
+      word-break: keep-all;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 22px;
+      padding: 3px 9px;
+      margin-bottom: 7px;
+      border-radius: 999px;
+      color: white;
+      background: var(--accent);
+      font-size: 0.72rem;
+      font-weight: 850;
+    }
+
+    .tag[data-type="交通"] { background: #2f6f73; }
+    .tag[data-type="住宿"] { background: #755b9b; }
+    .tag[data-type="美食"] { background: #c7653d; }
+    .tag[data-type="景點"] { background: #527d48; }
+    .tag[data-type="購物"] { background: #9b5b6f; }
+
+    .title {
+      margin: 0 0 8px;
+      font-size: 1.04rem;
+      line-height: 1.42;
+      font-weight: 850;
+    }
+
+    .map-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      max-width: 100%;
+      color: #4d605c;
+      text-decoration: none;
+      font-size: 0.84rem;
+      font-weight: 700;
+      line-height: 1.35;
+    }
+
+    .map-link span {
+      overflow-wrap: anywhere;
+    }
+
+    .note {
+      margin-top: 10px;
+      padding: 9px 11px;
+      border-left: 3px solid #d9a441;
+      border-radius: 9px;
+      background: #fff6dc;
+      color: #735318;
+      font-size: 0.86rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+    }
+
+    .empty, .setup {
+      padding: 22px;
+      border: 1px dashed #d8cabb;
+      border-radius: var(--radius);
+      color: var(--muted);
+      background: rgba(255, 253, 248, 0.7);
+      line-height: 1.6;
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    button {
+      font: inherit;
+    }
+
+    .action {
+      min-height: 46px;
+      border: 0;
+      border-radius: 12px;
+      color: white;
+      background: var(--primary);
+      font-weight: 850;
+      cursor: pointer;
+    }
+
+    .action.secondary { background: var(--accent); }
+    .action.muted {
+      color: var(--ink);
+      background: #e8e0d5;
+    }
+
+    .ledger-item {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 10px;
+      padding: 14px;
+      border: 1px solid rgba(231, 222, 210, 0.9);
+      border-radius: var(--radius);
+      background: rgba(255, 253, 248, 0.94);
+    }
+
+    .ledger-date {
+      color: var(--muted);
+      font-size: 0.76rem;
+      font-weight: 750;
+    }
+
+    .ledger-name {
+      margin-top: 3px;
+      font-weight: 850;
+      line-height: 1.35;
+    }
+
+    .ledger-note {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 0.78rem;
+    }
+
+    .pill {
+      display: inline-block;
+      margin-left: 5px;
+      padding: 2px 7px;
+      border-radius: 999px;
+      background: #e5f1ef;
+      color: var(--primary);
+      font-size: 0.72rem;
+      font-weight: 850;
+    }
+
+    .ledger-cost {
+      text-align: right;
+      font-weight: 950;
+      color: var(--accent);
+    }
+
+    .icon-buttons {
+      display: flex;
+      justify-content: end;
+      gap: 7px;
+      margin-top: 8px;
+    }
+
+    .icon-button {
+      width: 34px;
+      height: 34px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: white;
+      color: var(--muted);
+      cursor: pointer;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      display: none;
+      align-items: end;
+      justify-content: center;
+      background: rgba(26, 28, 27, 0.45);
+      padding: 18px;
+    }
+
+    .modal-backdrop.scoreboard-backdrop {
+      align-items: center;
+      background: rgba(20, 20, 20, 0.48);
+      backdrop-filter: blur(10px);
+    }
+
+    .modal-backdrop.active { display: flex; }
+
+    .modal {
+      width: min(100%, 430px);
+      padding: 18px;
+      border-radius: 18px;
+      background: #fffdf8;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.24);
+    }
+
+    .modal h2 {
+      margin: 0 0 14px;
+      font-size: 1.1rem;
+    }
+
+    .scoreboard-modal {
+      width: min(calc(100vw - 20px), 430px);
+      padding: 30px 28px 28px;
+      border-radius: 26px;
+      background: #fff;
+      text-align: center;
+      box-shadow: 0 26px 70px rgba(0, 0, 0, 0.28);
+    }
+
+    .scoreboard-title {
+      margin: 0 0 22px;
+      color: #2f3332;
+      font-size: 1.52rem;
+      font-weight: 950;
+      letter-spacing: 0;
+    }
+
+    .scoreboard-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 48px minmax(0, 1fr);
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+
+    .score-player { min-width: 0; text-align: center; }
+
+    .score-name {
+      margin-bottom: 8px;
+      color: #8d8d8d;
+      font-size: 1.13rem;
+      font-weight: 900;
+    }
+
+    .score-value {
+      font-size: clamp(2.4rem, 11vw, 3.28rem);
+      line-height: 1;
+      font-weight: 950;
+      letter-spacing: 0;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .score-value.gino { color: #1d64c8; }
+    .score-value.danny { color: #e94700; }
+
+    .score-vs {
+      color: #e6e6e6;
+      font-size: 1.7rem;
+      font-style: italic;
+      font-weight: 950;
+    }
+
+    .score-unit {
+      margin: 0 0 28px;
+      color: #9a9a9a;
+      font-size: 1.02rem;
+      font-weight: 780;
+    }
+
+    .score-close {
+      width: 100%;
+      min-height: 58px;
+      border: 0;
+      border-radius: 14px;
+      color: #fff;
+      background: #998b78;
+      box-shadow: 0 10px 22px rgba(93, 75, 52, 0.18);
+      font-size: 1.24rem;
+      font-weight: 950;
+      cursor: pointer;
+    }
+
+    label {
+      display: block;
+      margin: 12px 0 5px;
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 800;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      min-height: 44px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      padding: 10px 11px;
+      background: white;
+      color: var(--ink);
+      font: inherit;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 74px;
+    }
+
+    .modal-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    @media (max-width: 420px) {
+      main { padding: 14px; }
+      .card { grid-template-columns: 58px 1fr; padding: 13px; }
+      .time { font-size: 0.92rem; padding-right: 9px; }
+      .toolbar { grid-template-columns: 1fr; }
+      .scoreboard-modal { padding: 28px 22px 24px; }
+      .scoreboard-grid {
+        grid-template-columns: minmax(0, 1fr) 34px minmax(0, 1fr);
+        gap: 4px;
+      }
+      .score-name { font-size: 1.02rem; }
+      .score-vs { font-size: 1.38rem; }
+    }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="hero-main">
+      <div>
+        <h1>2026 鹿兒島之旅</h1>
+        <div class="subtitle">Kagoshima itinerary & shared ledger</div>
+      </div>
+      <div class="mark" aria-hidden="true">
+        <svg viewBox="0 0 64 64" role="img">
+          <path fill="#e9a65f" d="M7 45c8-16 15-25 25-25s17 9 25 25H7z"/>
+          <path fill="#7a8f59" d="M12 45c6-8 12-12 20-12s14 4 20 12H12z"/>
+          <circle cx="48" cy="16" r="7" fill="#d36c48"/>
+          <path fill="#f8f0df" d="M27 23l5-10 5 10h-10z"/>
+        </svg>
+      </div>
+    </div>
+    <nav class="tabs" id="tabs"></nav>
+  </header>
+
+  <main>
+    <section class="panel active" id="schedule-panel">
+      <div class="day-title">
+        <h2 id="day-heading">行程</h2>
+        <span id="day-count"></span>
+      </div>
+      <div id="schedule-list" class="empty">正在讀取行程...</div>
+    </section>
+
+    <section class="panel" id="ledger-panel">
+      <div class="toolbar">
+        <button class="action" id="add-ledger">新增消費</button>
+        <button class="action secondary" id="show-stats">統計</button>
+      </div>
+      <div id="ledger-list" class="empty">正在讀取記帳...</div>
+    </section>
+  </main>
+
+  <div class="modal-backdrop" id="form-modal">
+    <form class="modal" id="ledger-form">
+      <h2 id="form-title">新增消費</h2>
+      <input type="hidden" id="row-index">
+      <label for="date">日期</label>
+      <input id="date" type="date" required>
+      <label for="item">項目</label>
+      <input id="item" type="text" required placeholder="例如：黑豚炸豬排">
+      <label for="who">素隨</label>
+      <select id="who">
+        <option>Danny</option>
+        <option>Gino</option>
+      </select>
+      <label for="cost">金額（日圓）</label>
+      <input id="cost" type="number" inputmode="numeric" min="0" required>
+      <label for="note">備註</label>
+      <textarea id="note" placeholder="可留空"></textarea>
+      <div class="modal-actions">
+        <button class="action muted" type="button" id="cancel-form">取消</button>
+        <button class="action" type="submit" id="save-form">儲存</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="modal-backdrop scoreboard-backdrop" id="stats-modal">
+    <div class="modal scoreboard-modal">
+      <h2 class="scoreboard-title">消費大對決 🏆</h2>
+      <div class="scoreboard-grid">
+        <div class="score-player">
+          <div class="score-name">Gino</div>
+          <div class="score-value gino" id="score-gino">0</div>
+        </div>
+        <div class="score-vs">VS</div>
+        <div class="score-player">
+          <div class="score-name">Danny</div>
+          <div class="score-value danny" id="score-danny">0</div>
+        </div>
+      </div>
+      <div class="score-unit">(單位：日幣)</div>
+      <div>
+        <button class="score-close" type="button" id="close-stats">關閉</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbwDNfNV6l0Yw-cBDbjdY_nQqfjt3bssSBMVkRER-JcE8Xo7_YAQDZjZiqInCj8Auei9Tg/exec';
+    const state = {
+      schedule: [],
+      ledger: [],
+      activeDate: '',
+    };
+
+    const $ = selector => document.querySelector(selector);
+
+    document.addEventListener('DOMContentLoaded', () => {
+      $('#add-ledger').addEventListener('click', () => openForm());
+      $('#show-stats').addEventListener('click', showStats);
+      $('#cancel-form').addEventListener('click', closeForm);
+      $('#close-stats').addEventListener('click', () => $('#stats-modal').classList.remove('active'));
+      $('#ledger-form').addEventListener('submit', submitLedger);
+      loadSchedule();
+    });
+
+    function apiReady() {
+      return GAS_URL && !GAS_URL.includes('PASTE_YOUR');
+    }
+
+    async function request(action, options = {}) {
+      if (!apiReady()) throw new Error('尚未設定 Apps Script URL');
+      const join = GAS_URL.includes('?') ? '&' : '?';
+      const url = `${GAS_URL}${join}action=${encodeURIComponent(action)}`;
+      const response = await fetch(url, options);
+      const result = await response.json();
+      if (result.status !== 'success') throw new Error(result.message || '讀取失敗');
+      return result.data;
+    }
+
+    async function loadSchedule() {
+      if (!apiReady()) {
+        renderSetup();
+        return;
+      }
+
+      try {
+        state.schedule = await request('schedule');
+        state.activeDate = uniqueDates()[0] || '';
+        renderTabs();
+        renderSchedule();
+      } catch (error) {
+        $('#schedule-list').className = 'empty';
+        $('#schedule-list').textContent = `行程讀取失敗：${error.message}`;
+      }
+    }
+
+    async function loadLedger() {
+      $('#ledger-list').className = 'empty';
+      $('#ledger-list').textContent = '正在讀取記帳...';
+
+      try {
+        state.ledger = await request('ledger');
+        renderLedger();
+      } catch (error) {
+        $('#ledger-list').textContent = `記帳讀取失敗：${error.message}`;
+      }
+    }
+
+    function renderSetup() {
+      $('#tabs').innerHTML = '';
+      const tab = makeTab('設定', 'GAS', true);
+      $('#tabs').appendChild(tab);
+      $('#schedule-list').className = 'setup';
+      $('#schedule-list').textContent = '請先把 apps-script.js 貼到 Google Apps Script，部署成 Web App，然後將取得的 /exec URL 貼到 index.html 的 GAS_URL。完成後重新開啟頁面，就會讀取「2026鹿兒島」與「鹿兒島記帳」兩個分頁。';
+      $('#day-heading').textContent = '尚未連線';
+      $('#day-count').textContent = '';
+    }
+
+    function renderTabs() {
+      $('#tabs').innerHTML = '';
+      uniqueDates().forEach(date => {
+        const label = dayLabel(date);
+        const tab = makeTab(label.weekday, label.day, date === state.activeDate);
+        tab.addEventListener('click', () => {
+          state.activeDate = date;
+          renderTabs();
+          showPanel('schedule');
+          renderSchedule();
+          tab.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
+        });
+        $('#tabs').appendChild(tab);
+      });
+
+      const ledgerTab = makeTab('記帳', '¥', false);
+      ledgerTab.addEventListener('click', () => {
+        renderTabs();
+        showPanel('ledger');
+        loadLedger();
+      });
+      $('#tabs').appendChild(ledgerTab);
+    }
+
+    function makeTab(top, bottom, active) {
+      const button = document.createElement('button');
+      button.className = `tab${active ? ' active' : ''}`;
+      const small = document.createElement('small');
+      small.textContent = top;
+      const strong = document.createElement('span');
+      strong.textContent = bottom;
+      button.append(small, strong);
+      return button;
+    }
+
+    function showPanel(panel) {
+      $('#schedule-panel').classList.toggle('active', panel === 'schedule');
+      $('#ledger-panel').classList.toggle('active', panel === 'ledger');
+      [...document.querySelectorAll('.tab')].forEach(tab => tab.classList.remove('active'));
+      if (panel === 'ledger') {
+        const tabs = [...document.querySelectorAll('.tab')];
+        tabs[tabs.length - 1].classList.add('active');
+      }
+    }
+
+    function renderSchedule() {
+      const items = state.schedule.filter(item => item.date === state.activeDate);
+      const label = dayLabel(state.activeDate);
+      $('#day-heading').textContent = state.activeDate || '行程';
+      $('#day-count').textContent = items.length ? `${items.length} 個安排` : '';
+      $('#schedule-list').className = '';
+      $('#schedule-list').innerHTML = '';
+
+      if (!items.length) {
+        $('#schedule-list').className = 'empty';
+        $('#schedule-list').textContent = '這天還沒有行程。';
+        return;
+      }
+
+      items.forEach(item => $('#schedule-list').appendChild(scheduleCard(item)));
+    }
+
+    function scheduleCard(item) {
+      const card = document.createElement('article');
+      card.className = 'card';
+
+      const time = document.createElement('div');
+      time.className = 'time';
+      time.textContent = item.time || '未定';
+
+      const body = document.createElement('div');
+      const tag = document.createElement('div');
+      tag.className = 'tag';
+      tag.dataset.type = item.type || '行程';
+      tag.textContent = item.type || '行程';
+
+      const title = document.createElement('h3');
+      title.className = 'title';
+      title.textContent = item.title || '未命名行程';
+
+      body.append(tag, title);
+
+      if (item.location) {
+        const link = document.createElement('a');
+        link.className = 'map-link';
+        link.target = '_blank';
+        link.rel = 'noreferrer';
+        link.href = item.mapUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.location)}`;
+        link.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5Z"/></svg>';
+        const span = document.createElement('span');
+        span.textContent = item.location;
+        link.appendChild(span);
+        body.appendChild(link);
+      }
+
+      if (item.note) {
+        const note = document.createElement('div');
+        note.className = 'note';
+        note.textContent = item.note;
+        body.appendChild(note);
+      }
+
+      card.append(time, body);
+      return card;
+    }
+
+    function renderLedger() {
+      $('#ledger-list').innerHTML = '';
+      $('#ledger-list').className = '';
+
+      if (!state.ledger.length) {
+        $('#ledger-list').className = 'empty';
+        $('#ledger-list').textContent = '目前沒有消費記錄。';
+        return;
+      }
+
+      state.ledger.forEach(item => {
+        const row = document.createElement('article');
+        row.className = 'ledger-item';
+
+        const info = document.createElement('div');
+        const date = document.createElement('div');
+        date.className = 'ledger-date';
+        date.textContent = item.date || '未填日期';
+
+        const name = document.createElement('div');
+        name.className = 'ledger-name';
+        name.textContent = item.item || '未命名';
+        const who = document.createElement('span');
+        who.className = 'pill';
+        who.textContent = item.who || '未填';
+        name.appendChild(who);
+
+        info.append(date, name);
+        if (item.note) {
+          const note = document.createElement('div');
+          note.className = 'ledger-note';
+          note.textContent = item.note;
+          info.appendChild(note);
+        }
+
+        const side = document.createElement('div');
+        const cost = document.createElement('div');
+        cost.className = 'ledger-cost';
+        cost.textContent = yen(item.cost);
+        const buttons = document.createElement('div');
+        buttons.className = 'icon-buttons';
+        const edit = iconButton('編輯', '✎');
+        edit.addEventListener('click', () => openForm(item));
+        const del = iconButton('刪除', '×');
+        del.addEventListener('click', () => deleteLedger(item.rowIndex));
+        buttons.append(edit, del);
+        side.append(cost, buttons);
+
+        row.append(info, side);
+        $('#ledger-list').appendChild(row);
+      });
+    }
+
+    function iconButton(label, text) {
+      const button = document.createElement('button');
+      button.className = 'icon-button';
+      button.type = 'button';
+      button.title = label;
+      button.setAttribute('aria-label', label);
+      button.textContent = text;
+      return button;
+    }
+
+    function openForm(item = null) {
+      $('#form-title').textContent = item ? '編輯消費' : '新增消費';
+      $('#row-index').value = item ? item.rowIndex : '';
+      $('#date').value = item ? toInputDate(item.date) : today();
+      $('#item').value = item ? item.item : '';
+      $('#who').value = item ? item.who : 'Danny';
+      $('#cost').value = item ? item.cost : '';
+      $('#note').value = item ? item.note : '';
+      $('#form-modal').classList.add('active');
+    }
+
+    function closeForm() {
+      $('#form-modal').classList.remove('active');
+    }
+
+    async function submitLedger(event) {
+      event.preventDefault();
+      const button = $('#save-form');
+      button.disabled = true;
+      button.textContent = '儲存中...';
+
+      const rowIndex = $('#row-index').value;
+      const payload = {
+        action: rowIndex ? 'edit' : 'add',
+        rowIndex,
+        date: $('#date').value,
+        item: $('#item').value.trim(),
+        who: $('#who').value,
+        cost: Number($('#cost').value) || 0,
+        note: $('#note').value.trim(),
+      };
+
+      try {
+        await request('ledger', {
+          method: 'POST',
+          body: JSON.stringify(payload),
+        });
+        closeForm();
+        await loadLedger();
+      } catch (error) {
+        alert(`儲存失敗：${error.message}`);
+      } finally {
+        button.disabled = false;
+        button.textContent = '儲存';
+      }
+    }
+
+    async function deleteLedger(rowIndex) {
+      if (!confirm('確定要刪除這筆消費嗎？')) return;
+      try {
+        await request('ledger', {
+          method: 'POST',
+          body: JSON.stringify({ action: 'delete', rowIndex }),
+        });
+        await loadLedger();
+      } catch (error) {
+        alert(`刪除失敗：${error.message}`);
+      }
+    }
+
+    function showStats() {
+      const totals = state.ledger.reduce((acc, item) => {
+        const who = item.who || '未填';
+        acc[who] = (acc[who] || 0) + (Number(item.cost) || 0);
+        return acc;
+      }, {});
+
+      $('#score-gino').textContent = scoreNumber(totals.Gino);
+      $('#score-danny').textContent = scoreNumber(totals.Danny);
+      $('#stats-modal').classList.add('active');
+    }
+
+    function uniqueDates() {
+      return [...new Set(state.schedule.map(item => item.date).filter(Boolean))];
+    }
+
+    function dayLabel(dateText) {
+      const date = parseDate(dateText);
+      if (!date) return { weekday: '日期', day: dateText || '--' };
+      const weekdays = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
+      return { weekday: weekdays[date.getDay()], day: String(date.getDate()) };
+    }
+
+    function parseDate(value) {
+      if (!value) return null;
+      const match = String(value).match(/(\d{4})[/-](\d{1,2})[/-](\d{1,2})/);
+      if (!match) return null;
+      return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+    }
+
+    function toInputDate(value) {
+      const date = parseDate(value);
+      if (!date) return today();
+      const yyyy = date.getFullYear();
+      const mm = String(date.getMonth() + 1).padStart(2, '0');
+      const dd = String(date.getDate()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}`;
+    }
+
+    function today() {
+      return new Date().toISOString().slice(0, 10);
+    }
+
+    function yen(value) {
+      return `¥${(Number(value) || 0).toLocaleString('ja-JP')}`;
+    }
+
+    function scoreNumber(value) {
+      return (Number(value) || 0).toLocaleString('ja-JP');
+    }
+  </script>
+</body>
+</html>
