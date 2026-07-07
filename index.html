@@ -393,7 +393,9 @@
     }
 
     .score-value {
-      font-size: clamp(2.4rem, 11vw, 3.28rem);
+      max-width: 100%;
+      overflow: hidden;
+      font-size: var(--score-size, clamp(2.4rem, 11vw, 3.28rem));
       line-height: 1;
       font-weight: 950;
       letter-spacing: 0;
@@ -560,7 +562,7 @@
   </div>
 
   <script>
-    const GAS_URL = 'https://script.google.com/macros/s/AKfycbwDNfNV6l0Yw-cBDbjdY_nQqfjt3bssSBMVkRER-JcE8Xo7_YAQDZjZiqInCj8Auei9Tg/exec';
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbyKOM8pDvi2lN3P2rOmFkSDPVF8RjfD2OtI_XCi9heUndmHjwD5UI77xPi6PpVIxd00CA/exec';
     const state = {
       schedule: [],
       ledger: [],
@@ -600,6 +602,9 @@
 
       try {
         state.schedule = await request('schedule');
+        state.schedule.forEach(item => {
+          item.time = normalizeTimeText(item.time);
+        });
         state.activeDate = uniqueDates()[0] || '';
         renderTabs();
         renderSchedule();
@@ -699,7 +704,7 @@
 
       const time = document.createElement('div');
       time.className = 'time';
-      time.textContent = item.time || '未定';
+      time.textContent = normalizeTimeText(item.time) || '未定';
 
       const body = document.createElement('div');
       const tag = document.createElement('div');
@@ -867,8 +872,8 @@
         return acc;
       }, {});
 
-      $('#score-gino').textContent = scoreNumber(totals.Gino);
-      $('#score-danny').textContent = scoreNumber(totals.Danny);
+      setScore($('#score-gino'), totals.Gino);
+      setScore($('#score-danny'), totals.Danny);
       $('#stats-modal').classList.add('active');
     }
 
@@ -909,6 +914,34 @@
 
     function scoreNumber(value) {
       return (Number(value) || 0).toLocaleString('ja-JP');
+    }
+
+    function normalizeTimeText(value) {
+      const text = String(value || '').trim();
+      const match = text.match(/(?:上午|下午|AM|PM)?\s*(\d{1,2}):(\d{2})(?::\d{2})?\s*(?:上午|下午|AM|PM)?/i);
+      if (!match) return text;
+      const isPm = /下午|PM/i.test(text);
+      const isAm = /上午|AM/i.test(text);
+      let hour = Number(match[1]);
+
+      if (isPm && hour < 12) hour += 12;
+      if (isAm && hour === 12) hour = 0;
+
+      return `${String(hour).padStart(2, '0')}:${match[2]}`;
+    }
+
+    function setScore(element, value) {
+      const text = scoreNumber(value);
+      const digits = text.length;
+      let size = 'clamp(2.4rem, 11vw, 3.28rem)';
+
+      if (digits >= 12) size = '1.72rem';
+      else if (digits >= 10) size = '1.95rem';
+      else if (digits >= 8) size = '2.28rem';
+      else if (digits >= 7) size = '2.62rem';
+
+      element.textContent = text;
+      element.style.setProperty('--score-size', size);
     }
   </script>
 </body>
