@@ -654,10 +654,11 @@
         const tab = makeTab(label.weekday, label.day, date === state.activeDate);
         tab.addEventListener('click', () => {
           state.activeDate = date;
-          renderTabs();
           showPanel('schedule');
+          renderTabs();
           renderSchedule();
-          tab.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
+          const activeTab = document.querySelector('.tab.active');
+          if (activeTab) activeTab.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
         });
         $('#tabs').appendChild(tab);
       });
