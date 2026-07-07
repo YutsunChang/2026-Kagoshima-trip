@@ -377,22 +377,30 @@
 
     .scoreboard-grid {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 30px minmax(0, 1fr);
-      align-items: center;
-      gap: 4px;
-      margin-bottom: 24px;
+      grid-template-areas:
+        "gino-name spacer danny-name"
+        "gino-score vs danny-score";
+      grid-template-columns: minmax(0, 1fr) 42px minmax(0, 1fr);
+      align-items: end;
+      column-gap: 10px;
+      row-gap: 10px;
+      margin-bottom: 26px;
     }
 
-    .score-player { min-width: 0; text-align: center; }
-
     .score-name {
-      margin-bottom: 8px;
+      min-width: 0;
       color: #8d8d8d;
       font-size: 1.13rem;
       font-weight: 900;
+      line-height: 1;
+      text-align: center;
     }
 
+    .score-name.gino { grid-area: gino-name; }
+    .score-name.danny { grid-area: danny-name; }
+
     .score-value {
+      min-width: 0;
       max-width: 100%;
       overflow: hidden;
       display: block;
@@ -402,16 +410,21 @@
       letter-spacing: 0;
       white-space: nowrap;
       font-variant-numeric: tabular-nums;
+      text-align: center;
     }
 
-    .score-value.gino { color: #1d64c8; }
-    .score-value.danny { color: #e94700; }
+    .score-value.gino { grid-area: gino-score; color: #1d64c8; }
+    .score-value.danny { grid-area: danny-score; color: #e94700; }
 
     .score-vs {
+      grid-area: vs;
+      align-self: center;
       color: #e6e6e6;
       font-size: 1.42rem;
       font-style: italic;
       font-weight: 950;
+      line-height: 1;
+      text-align: center;
     }
 
     .score-unit {
@@ -472,8 +485,9 @@
       .toolbar { grid-template-columns: 1fr; }
       .scoreboard-modal { padding: 28px 22px 24px; }
       .scoreboard-grid {
-        grid-template-columns: minmax(0, 1fr) 24px minmax(0, 1fr);
-        gap: 2px;
+        grid-template-columns: minmax(0, 1fr) 34px minmax(0, 1fr);
+        column-gap: 6px;
+        row-gap: 9px;
       }
       .score-name { font-size: 1.02rem; }
       .score-vs { font-size: 1.38rem; }
@@ -545,15 +559,11 @@
     <div class="modal scoreboard-modal">
       <h2 class="scoreboard-title">消費大對決 🏆</h2>
       <div class="scoreboard-grid">
-        <div class="score-player">
-          <div class="score-name">Gino</div>
-          <div class="score-value gino" id="score-gino">0</div>
-        </div>
+        <div class="score-name gino">Gino</div>
+        <div class="score-name danny">Danny</div>
+        <div class="score-value gino" id="score-gino">0</div>
         <div class="score-vs">VS</div>
-        <div class="score-player">
-          <div class="score-name">Danny</div>
-          <div class="score-value danny" id="score-danny">0</div>
-        </div>
+        <div class="score-value danny" id="score-danny">0</div>
       </div>
       <div class="score-unit">(單位：日幣)</div>
       <div>
@@ -876,7 +886,10 @@
       setScore($('#score-gino'), totals.Gino);
       setScore($('#score-danny'), totals.Danny);
       $('#stats-modal').classList.add('active');
-      requestAnimationFrame(fitScoreboard);
+      requestAnimationFrame(() => {
+        fitScoreboard();
+        requestAnimationFrame(fitScoreboard);
+      });
     }
 
     function uniqueDates() {
@@ -933,29 +946,23 @@
     }
 
     function setScore(element, value) {
-      const text = scoreNumber(value);
-      const digits = text.length;
-      let size = 'clamp(2.4rem, 11vw, 3.28rem)';
-
-      if (digits >= 12) size = '1.72rem';
-      else if (digits >= 10) size = '1.95rem';
-      else if (digits >= 8) size = '2.28rem';
-      else if (digits >= 7) size = '2.62rem';
-
-      element.textContent = text;
-      element.style.setProperty('--score-size', size);
+      element.textContent = scoreNumber(value);
+      element.style.removeProperty('--score-size');
     }
 
     function fitScoreboard() {
-      document.querySelectorAll('.score-value').forEach(element => {
-        let size = Number.parseFloat(getComputedStyle(element).fontSize);
-        const minSize = 22;
+      const values = [...document.querySelectorAll('.score-value')];
+      if (!values.length) return;
 
-        while (element.scrollWidth > element.clientWidth && size > minSize) {
-          size -= 1;
-          element.style.setProperty('--score-size', `${size}px`);
-        }
-      });
+      values.forEach(element => element.style.removeProperty('--score-size'));
+
+      let size = Math.min(...values.map(element => Number.parseFloat(getComputedStyle(element).fontSize)));
+      const minSize = 22;
+
+      while (values.some(element => element.scrollWidth > element.clientWidth) && size > minSize) {
+        size -= 1;
+        values.forEach(element => element.style.setProperty('--score-size', `${size}px`));
+      }
     }
   </script>
 </body>
