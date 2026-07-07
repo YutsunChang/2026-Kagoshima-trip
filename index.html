@@ -377,9 +377,9 @@
 
     .scoreboard-grid {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 48px minmax(0, 1fr);
+      grid-template-columns: minmax(0, 1fr) 30px minmax(0, 1fr);
       align-items: center;
-      gap: 8px;
+      gap: 4px;
       margin-bottom: 24px;
     }
 
@@ -395,6 +395,7 @@
     .score-value {
       max-width: 100%;
       overflow: hidden;
+      display: block;
       font-size: var(--score-size, clamp(2.4rem, 11vw, 3.28rem));
       line-height: 1;
       font-weight: 950;
@@ -408,7 +409,7 @@
 
     .score-vs {
       color: #e6e6e6;
-      font-size: 1.7rem;
+      font-size: 1.42rem;
       font-style: italic;
       font-weight: 950;
     }
@@ -471,8 +472,8 @@
       .toolbar { grid-template-columns: 1fr; }
       .scoreboard-modal { padding: 28px 22px 24px; }
       .scoreboard-grid {
-        grid-template-columns: minmax(0, 1fr) 34px minmax(0, 1fr);
-        gap: 4px;
+        grid-template-columns: minmax(0, 1fr) 24px minmax(0, 1fr);
+        gap: 2px;
       }
       .score-name { font-size: 1.02rem; }
       .score-vs { font-size: 1.38rem; }
@@ -875,6 +876,7 @@
       setScore($('#score-gino'), totals.Gino);
       setScore($('#score-danny'), totals.Danny);
       $('#stats-modal').classList.add('active');
+      requestAnimationFrame(fitScoreboard);
     }
 
     function uniqueDates() {
@@ -942,6 +944,18 @@
 
       element.textContent = text;
       element.style.setProperty('--score-size', size);
+    }
+
+    function fitScoreboard() {
+      document.querySelectorAll('.score-value').forEach(element => {
+        let size = Number.parseFloat(getComputedStyle(element).fontSize);
+        const minSize = 22;
+
+        while (element.scrollWidth > element.clientWidth && size > minSize) {
+          size -= 1;
+          element.style.setProperty('--score-size', `${size}px`);
+        }
+      });
     }
   </script>
 </body>
