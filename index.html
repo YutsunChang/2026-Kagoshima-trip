@@ -348,7 +348,7 @@
       inset: 0;
       z-index: 30;
       display: none;
-      align-items: end;
+      align-items: center;
       justify-content: center;
       background: rgba(26, 28, 27, 0.45);
       padding: 18px;
@@ -364,6 +364,8 @@
 
     .modal {
       width: min(100%, 430px);
+      max-height: calc(100dvh - 36px);
+      overflow: auto;
       padding: 18px;
       border-radius: 18px;
       background: #fffdf8;
@@ -481,6 +483,19 @@
       background: white;
       color: var(--ink);
       font: inherit;
+    }
+
+    input[type="date"] {
+      height: 44px;
+      line-height: 44px;
+      padding-top: 0;
+      padding-bottom: 0;
+    }
+
+    input[type="date"]::-webkit-date-and-time-value {
+      min-height: 44px;
+      line-height: 44px;
+      text-align: left;
     }
 
     textarea {
