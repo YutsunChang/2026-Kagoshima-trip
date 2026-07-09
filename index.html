@@ -185,17 +185,17 @@
       font-weight: 850;
     }
 
-    .tag[data-type="景點觀光"] { background: #f6dc7d; color: #5b4300; }
-    .tag[data-type="放空亂晃"] { background: #cfe1dc; color: #315e58; }
-    .tag[data-type="美食"] { background: #efb7b1; color: #7a2520; }
-    .tag[data-type="夜生活"] { background: #cfc5df; color: #4f416d; }
-    .tag[data-type="交通"] { background: #b9d1e5; color: #28516f; }
-    .tag[data-type="辦事"] { background: #d8d2c6; color: #5a5044; }
-    .tag[data-type="住宿"] { background: #ddb38f; color: #6f3c17; }
-    .tag[data-type="滑雪"] { background: #dce6eb; color: #3c5f6d; }
-    .tag[data-type="逛街購物"] { background: #d7c8e8; color: #533b70; }
-    .tag[data-type="景點"] { background: #f6dc7d; color: #5b4300; }
-    .tag[data-type="購物"] { background: #d7c8e8; color: #533b70; }
+    .tag[data-type="景點觀光"] { background: #f3e6b7; color: #5c4a18; }
+    .tag[data-type="放空亂晃"] { background: #dce9e2; color: #3f665c; }
+    .tag[data-type="美食"] { background: #efd4c9; color: #7a3f2f; }
+    .tag[data-type="夜生活"] { background: #e4d8e8; color: #5c4a68; }
+    .tag[data-type="交通"] { background: #d7e4ed; color: #3c627a; }
+    .tag[data-type="辦事"] { background: #e2ddd3; color: #5e554b; }
+    .tag[data-type="住宿"] { background: #ead2bb; color: #70451f; }
+    .tag[data-type="滑雪"] { background: #e5edf0; color: #496674; }
+    .tag[data-type="逛街購物"] { background: #e2d8e8; color: #5a4a68; }
+    .tag[data-type="景點"] { background: #f3e6b7; color: #5c4a18; }
+    .tag[data-type="購物"] { background: #e2d8e8; color: #5a4a68; }
 
     .title {
       margin: 0 0 8px;
@@ -310,6 +310,16 @@
       font-weight: 850;
     }
 
+    .pill.gino {
+      background: #e1efec;
+      color: #2f6f73;
+    }
+
+    .pill.danny {
+      background: #f8e3d5;
+      color: #a1542e;
+    }
+
     .ledger-cost {
       text-align: right;
       font-weight: 950;
@@ -369,14 +379,14 @@
       width: min(calc(100vw - 20px), 430px);
       padding: 30px 28px 28px;
       border-radius: 26px;
-      background: #fff;
+      background: #fffdf8;
       text-align: center;
-      box-shadow: 0 26px 70px rgba(0, 0, 0, 0.28);
+      box-shadow: 0 26px 70px rgba(73, 54, 33, 0.28);
     }
 
     .scoreboard-title {
       margin: 0 0 22px;
-      color: #2f3332;
+      color: #3a332b;
       font-size: 1.52rem;
       font-weight: 950;
       letter-spacing: 0;
@@ -396,15 +406,15 @@
 
     .score-name {
       min-width: 0;
-      color: #8d8d8d;
+      color: #928679;
       font-size: 1.13rem;
       font-weight: 900;
       line-height: 1;
       text-align: center;
     }
 
-    .score-name.gino { grid-area: gino-name; }
-    .score-name.danny { grid-area: danny-name; }
+    .score-name.gino { grid-area: gino-name; color: #2f6f73; }
+    .score-name.danny { grid-area: danny-name; color: #a1542e; }
 
     .score-value {
       min-width: 0;
@@ -420,13 +430,13 @@
       text-align: center;
     }
 
-    .score-value.gino { grid-area: gino-score; color: #1d64c8; }
-    .score-value.danny { grid-area: danny-score; color: #e94700; }
+    .score-value.gino { grid-area: gino-score; color: #2f6f73; }
+    .score-value.danny { grid-area: danny-score; color: #c7653d; }
 
     .score-vs {
       grid-area: vs;
       align-self: center;
-      color: #e6e6e6;
+      color: #e1d9ce;
       font-size: 1.42rem;
       font-style: italic;
       font-weight: 950;
@@ -436,7 +446,7 @@
 
     .score-unit {
       margin: 0 0 28px;
-      color: #9a9a9a;
+      color: #9a8d7e;
       font-size: 1.02rem;
       font-weight: 780;
     }
@@ -447,8 +457,8 @@
       border: 0;
       border-radius: 14px;
       color: #fff;
-      background: #998b78;
-      box-shadow: 0 10px 22px rgba(93, 75, 52, 0.18);
+      background: #8b7d6b;
+      box-shadow: 0 10px 22px rgba(73, 54, 33, 0.18);
       font-size: 1.24rem;
       font-weight: 950;
       cursor: pointer;
@@ -506,7 +516,7 @@
     <div class="hero-main">
       <div>
         <h1>2026 鹿兒島之旅</h1>
-        <div class="subtitle">Kagoshima itinerary & shared ledger</div>
+        <div class="subtitle">🌋Kagoshima Trip</div>
       </div>
       <div class="mark" aria-hidden="true">
         <svg viewBox="0 0 64 64" role="img">
@@ -784,7 +794,7 @@
         name.className = 'ledger-name';
         name.textContent = item.item || '未命名';
         const who = document.createElement('span');
-        who.className = 'pill';
+        who.className = `pill ${personClass(item.who)}`;
         who.textContent = item.who || '未填';
         name.appendChild(who);
 
@@ -937,6 +947,13 @@
 
     function scoreNumber(value) {
       return (Number(value) || 0).toLocaleString('ja-JP');
+    }
+
+    function personClass(value) {
+      const name = String(value || '').trim().toLowerCase();
+      if (name === 'gino') return 'gino';
+      if (name === 'danny') return 'danny';
+      return '';
     }
 
     function normalizeTimeText(value) {
