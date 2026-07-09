@@ -185,11 +185,17 @@
       font-weight: 850;
     }
 
-    .tag[data-type="交通"] { background: #2f6f73; }
-    .tag[data-type="住宿"] { background: #755b9b; }
-    .tag[data-type="美食"] { background: #c7653d; }
-    .tag[data-type="景點"] { background: #527d48; }
-    .tag[data-type="購物"] { background: #9b5b6f; }
+    .tag[data-type="景點觀光"] { background: #f6dc7d; color: #5b4300; }
+    .tag[data-type="放空亂晃"] { background: #cfe1dc; color: #315e58; }
+    .tag[data-type="美食"] { background: #efb7b1; color: #7a2520; }
+    .tag[data-type="夜生活"] { background: #cfc5df; color: #4f416d; }
+    .tag[data-type="交通"] { background: #b9d1e5; color: #28516f; }
+    .tag[data-type="辦事"] { background: #d8d2c6; color: #5a5044; }
+    .tag[data-type="住宿"] { background: #ddb38f; color: #6f3c17; }
+    .tag[data-type="滑雪"] { background: #dce6eb; color: #3c5f6d; }
+    .tag[data-type="逛街購物"] { background: #d7c8e8; color: #533b70; }
+    .tag[data-type="景點"] { background: #f6dc7d; color: #5b4300; }
+    .tag[data-type="購物"] { background: #d7c8e8; color: #533b70; }
 
     .title {
       margin: 0 0 8px;
@@ -217,10 +223,11 @@
     .note {
       margin-top: 10px;
       padding: 9px 11px;
-      border-left: 3px solid #d9a441;
+      border: 1px solid #eadfcb;
+      border-left: 3px solid #d8b76a;
       border-radius: 9px;
-      background: #fff6dc;
-      color: #735318;
+      background: #fffaf0;
+      color: #756246;
       font-size: 0.86rem;
       line-height: 1.5;
       white-space: pre-wrap;
@@ -735,7 +742,7 @@
         link.className = 'map-link';
         link.target = '_blank';
         link.rel = 'noreferrer';
-        link.href = item.mapUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.location)}`;
+        link.href = item.mapUrl || mapSearchUrl(item);
         link.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5Z"/></svg>';
         const span = document.createElement('span');
         span.textContent = item.location;
@@ -944,6 +951,15 @@
       if (isAm && hour === 12) hour = 0;
 
       return `${String(hour).padStart(2, '0')}:${match[2]}`;
+    }
+
+    function mapSearchUrl(item) {
+      return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapSearchQuery(item))}`;
+    }
+
+    function mapSearchQuery(item) {
+      const location = String(item.location || '').trim();
+      return location;
     }
 
     function setScore(element, value) {
