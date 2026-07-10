@@ -1,0 +1,599 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>AI提醒產生工具</title>
+  <style>
+    :root {
+      --ink: #2f3332;
+      --muted: #727875;
+      --line: #e7ded2;
+      --card: #fffdf8;
+      --bg: #f7f2e8;
+      --primary: #2f6f73;
+      --accent: #c7653d;
+      --shadow: 0 10px 30px rgba(73, 54, 33, 0.1);
+      --radius: 14px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 20% 0%, rgba(199, 101, 61, 0.14), transparent 30%),
+        linear-gradient(180deg, #fffaf1 0%, var(--bg) 52%, #eef5ef 100%);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", sans-serif;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      padding: calc(16px + env(safe-area-inset-top)) 18px 14px;
+      background: rgba(255, 250, 241, 0.94);
+      border-bottom: 1px solid rgba(231, 222, 210, 0.8);
+      backdrop-filter: blur(18px);
+    }
+
+    .wrap {
+      width: min(100%, 820px);
+      margin: 0 auto;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 1.25rem;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+
+    .sub {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 0.86rem;
+      line-height: 1.45;
+      font-weight: 650;
+    }
+
+    main {
+      width: min(100%, 820px);
+      margin: 0 auto;
+      padding: 18px;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    button {
+      min-height: 46px;
+      border: 0;
+      border-radius: 12px;
+      background: var(--primary);
+      color: white;
+      font: inherit;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    button.secondary { background: var(--accent); }
+    button.muted {
+      background: #e8e0d5;
+      color: var(--ink);
+    }
+    button:disabled {
+      opacity: 0.58;
+      cursor: not-allowed;
+    }
+
+    .status {
+      margin-bottom: 14px;
+      padding: 12px 13px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(255, 253, 248, 0.86);
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.55;
+    }
+
+    .item {
+      margin-bottom: 12px;
+      padding: 14px;
+      border: 1px solid rgba(231, 222, 210, 0.9);
+      border-radius: var(--radius);
+      background: rgba(255, 253, 248, 0.95);
+      box-shadow: 0 5px 18px rgba(73, 54, 33, 0.06);
+    }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 800;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 22px;
+      padding: 3px 9px;
+      border-radius: 999px;
+      background: #f3e6b7;
+      color: #5c4a18;
+      font-size: 0.72rem;
+      font-weight: 900;
+    }
+
+    h2 {
+      margin: 0 0 5px;
+      font-size: 1rem;
+      line-height: 1.38;
+      letter-spacing: 0;
+    }
+
+    .place {
+      color: #4d605c;
+      font-size: 0.84rem;
+      font-weight: 750;
+      line-height: 1.4;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 78px;
+      margin-top: 11px;
+      padding: 10px 11px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      background: white;
+      color: var(--ink);
+      font: inherit;
+      font-size: 0.9rem;
+      line-height: 1.5;
+      resize: vertical;
+    }
+
+    .empty {
+      padding: 22px;
+      border: 1px dashed #d8cabb;
+      border-radius: var(--radius);
+      background: rgba(255, 253, 248, 0.7);
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    @media (max-width: 520px) {
+      .actions { grid-template-columns: 1fr; }
+      header, main { padding-left: 14px; padding-right: 14px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1>AI提醒產生工具</h1>
+      <div class="sub">先產生並預覽每筆行程的 AI提醒，確認後再一次寫入行程表。</div>
+    </div>
+  </header>
+
+  <main>
+    <div class="actions">
+      <button type="button" id="load">讀取並產生 AI提醒</button>
+      <button type="button" class="secondary" id="save" disabled>寫入行程表</button>
+    </div>
+    <div class="status" id="status">尚未讀取行程。</div>
+    <div id="list" class="empty">按上方按鈕開始。</div>
+  </main>
+
+  <script>
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbyKOM8pDvi2lN3P2rOmFkSDPVF8RjfD2OtI_XCi9heUndmHjwD5UI77xPi6PpVIxd00CA/exec';
+    const SAKURAJIMA_FERRY_URL = 'https://www.city.kagoshima.lg.jp/sakurajima-ferry/';
+    const state = { items: [] };
+    const $ = selector => document.querySelector(selector);
+
+    $('#load').addEventListener('click', loadAndGenerate);
+    $('#save').addEventListener('click', saveMemos);
+
+    async function api(action, options = {}) {
+      const join = GAS_URL.includes('?') ? '&' : '?';
+      const response = await fetch(`${GAS_URL}${join}action=${encodeURIComponent(action)}`, options);
+      const result = await response.json();
+      if (result.status !== 'success') throw new Error(result.message || '操作失敗');
+      return result.data;
+    }
+
+    async function loadAndGenerate() {
+      setBusy(true, '正在讀取行程...');
+      try {
+        const data = await api('schedule');
+        const sourceItems = data.filter(item => item.rowIndex && (item.title || item.location || item.note));
+        state.items = sourceItems.map(item => ({
+          ...item,
+          generatedMemo: generateMemo(item, sourceItems),
+        }));
+        render();
+        $('#save').disabled = state.items.length === 0;
+        setStatus(`已產生 ${state.items.length} 筆 AI提醒。可以先手動調整，再寫入行程表。`);
+      } catch (error) {
+        setStatus(`讀取失敗：${error.message}`);
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    async function saveMemos() {
+      if (!state.items.length) return;
+
+      const payload = {
+        action: 'updateScheduleMemos',
+        items: [...document.querySelectorAll('[data-row-index]')].map(node => ({
+          rowIndex: Number(node.dataset.rowIndex),
+          memo: node.querySelector('textarea').value.trim(),
+        })),
+      };
+
+      setBusy(true, '正在寫入行程表...');
+      try {
+        const result = await api('schedule', {
+          method: 'POST',
+          body: JSON.stringify(payload),
+        });
+        setStatus(`完成，已寫入行程表 ${result.updated || payload.items.length} 筆 AI提醒。回到正式頁面重新整理就會看到。`);
+      } catch (error) {
+        setStatus(`寫入失敗：${error.message}`);
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    function render() {
+      $('#list').className = '';
+      $('#list').innerHTML = '';
+
+      if (!state.items.length) {
+        $('#list').className = 'empty';
+        $('#list').textContent = '沒有可產生 AI提醒 的行程。';
+        return;
+      }
+
+      state.items.forEach(item => {
+        const card = document.createElement('article');
+        card.className = 'item';
+        card.dataset.rowIndex = item.rowIndex;
+
+        const meta = document.createElement('div');
+        meta.className = 'meta';
+        meta.append(textNode(`#${item.rowIndex}`));
+        if (item.date) meta.append(textNode(item.date));
+        if (item.time) meta.append(textNode(normalizeTimeText(item.time)));
+        if (item.type) {
+          const tag = document.createElement('span');
+          tag.className = 'tag';
+          tag.textContent = item.type;
+          meta.append(tag);
+        }
+
+        const title = document.createElement('h2');
+        title.textContent = item.title || '未命名行程';
+
+        const place = document.createElement('div');
+        place.className = 'place';
+        place.textContent = item.location || '';
+
+        const memo = document.createElement('textarea');
+        memo.value = item.generatedMemo;
+
+        card.append(meta, title);
+        if (item.location) card.append(place);
+        card.append(memo);
+        $('#list').append(card);
+      });
+    }
+
+    function generateMemo(item, allItems = []) {
+      const title = clean(item.title);
+      const type = clean(item.type);
+      const note = clean(item.note);
+      const location = clean(item.location);
+      const time = normalizeTimeText(item.time);
+      const text = `${type} ${title} ${location} ${note}`;
+      const fixedTime = time && time !== 'xx:xx' ? time : '';
+      const context = dayContext(item, allItems);
+
+      if (/飛機|機場|航廈|抵達|出發/.test(text)) {
+        return joinMemo([
+          fixedTime
+            ? `${fixedTime} 的航班先把登機證、行李規定和抵達航廈截圖；鹿兒島機場落地後可先補水/上廁所，再去租車櫃台，避免拿車後又折返。`
+            : '把航班、抵達航廈和行李規定截圖；鹿兒島機場取車前先補水、上廁所、確認租車櫃台位置。',
+          `機場地圖：${mapsSearch('鹿児島空港 国内線 ターミナル')}`,
+        ]);
+      }
+
+      if (/租車|レンタカ|Toyota|Times/i.test(text)) {
+        return joinMemo([
+          '取車時確認駕照譯本、保險、ETC、導航語言、還車油量規則。',
+          context.next ? `下一站是「${context.next.title || context.next.location}」，建議在櫃台旁先設定導航再出發。` : '第一段路先在機場附近設定好導航再出發。',
+          context.next ? `開車導航：${mapsDirections(context.next.location || context.next.title)}` : `鹿兒島機場租車：${mapsSearch('鹿児島空港 レンタカー')}`,
+        ]);
+      }
+
+      if (/旅行人山莊/.test(text) && /泡湯|溫泉|温泉|日帰り|立寄|湯/.test(title + note)) {
+        return joinMemo([
+          '旅行人山莊泡湯重點是露天風呂時間與是否需預約/借毛巾；可和丸尾瀑布、霧島溫泉市場排同區，泡完別再排太趕的山路車程。',
+          `周邊順路：${mapsSearch('旅行人山荘 丸尾滝 霧島温泉市場')}`,
+        ]);
+      }
+
+      if (/旅行人山莊/.test(text) && /check ?in|入住|住宿/i.test(title + note + type)) {
+        return joinMemo([
+          '旅行人山莊在霧島山區，入住前先確認晚餐時間、貸切/露天風呂規則、停車位置；天黑後山路較累，建議早點抵達。',
+          `開車導航：${mapsDirections('旅行人山荘')}`,
+        ]);
+      }
+
+      if (/泡湯|溫泉|温泉|日帰り|立寄|湯/.test(title + note) && !/住宿|check ?in|入住/i.test(title + note)) {
+        return joinMemo([
+          '泡湯先確認日歸受理時間、休館日、毛巾和付款方式。',
+          context.next ? `泡完後接「${context.next.title || context.next.location}」不要排太緊，山區移動尤其要留緩衝。` : '泡完容易放鬆疲累，後面適合接咖啡、瀑布或短景點。',
+          location ? `地圖：${mapsSearch(location)}` : '',
+        ]);
+      }
+
+      if (/check ?in|住宿|飯店|旅館|INN|指宿白水館/i.test(text)) {
+        if (/指宿|砂蒸/.test(text)) {
+          return joinMemo([
+            '指宿住宿先確認晚餐/早餐時間、砂蒸或溫泉最後受理、停車位置。',
+            context.hasLaterOutdoor ? '如果當天還想跑池田湖、長崎鼻或海邊景點，先看體力，不要為了打卡把入住後節奏弄太趕。' : '入住後可以把節奏放慢，留時間泡湯和整理行李。',
+            location ? `開車導航：${mapsDirections(location)}` : '',
+          ]);
+        }
+        return joinMemo([
+          '先截圖訂房編號、停車/寄放行李規則和 check-in 時間。',
+          context.sameDayArea ? `同天還有${context.sameDayArea}行程，建議先確認飯店到該區的回程方式。` : '鹿兒島市區住宿可順便確認天文館或中央站回飯店動線。',
+          location ? `停車/導航：${mapsSearch(`${location} 駐車場`)}` : '',
+        ]);
+      }
+
+      if (/砂蒸/.test(text)) {
+        return joinMemo([
+          '砂蒸後會需要洗澡整理，別把下一個點排太近。',
+          context.next ? `如果後面接「${context.next.title || context.next.location}」，建議先抓 60-90 分鐘緩衝。` : '若還有精神可順路長崎鼻/池田湖，累了就直接回飯店泡湯。',
+          `砂蒸地圖：${mapsSearch('指宿 砂むし会館 砂楽 駐車場')}`,
+        ]);
+      }
+
+      if (/流水麵|そうめん|美食|餐|吃|拉麵|咖啡|燒肉|居酒屋/.test(text)) {
+        if (/唐船峡|唐船峽|そうめん|流水麵/.test(text)) {
+          return joinMemo([
+            '唐船峽適合搭配池田湖、長崎鼻或西大山站一起走；尖峰可能排隊，車位滿就把停留時間拉長。',
+            nearbyFromContext(context, ['池田湖', '長崎鼻', '西大山']),
+            `地圖/停車：${mapsSearch('唐船峡 そうめん流し 駐車場')}`,
+          ]);
+        }
+        return joinMemo([
+          '先查營業日、尖峰排隊和停車/付款方式。',
+          /天文館/.test(context.dayText + text)
+            ? '如果在天文館附近，可把白熊冰、黑豚料理或咖啡店列為同區備案。'
+            : context.next ? `吃完若要接「${context.next.title || context.next.location}」，先看車程和停車，不要只抓用餐時間。` : '可先存一間附近候補店，遇到排隊太久就切換。',
+          /天文館/.test(context.dayText + text)
+            ? `天文館餐廳：${mapsSearch('天文館 黒豚 とんかつ 白熊 カフェ')}`
+            : location ? `附近餐廳：${mapsSearch(`${location} ランチ 駐車場`)}` : '',
+        ]);
+      }
+
+      if (/JR最南端|西大山/.test(text)) {
+        return joinMemo([
+          '西大山站重點是拍照和到此一遊，停留 15-25 分鐘通常夠。',
+          nearbyFromContext(context, ['唐船峽', '池田湖', '長崎鼻']) || '適合和唐船峽、池田湖、長崎鼻排成同一條指宿路線。',
+          `開車導航：${mapsDirections('JR西大山駅')}`,
+        ]);
+      }
+
+      if (/天文館/.test(text)) {
+        if (/逛|購物|商店|街|買/.test(title + type)) {
+          return joinMemo([
+            '天文館逛街建議先停好車用步行串點；白熊冰、黑豚料理、藥妝/伴手禮可排成同區清單，避免一直移車。',
+            `停車場：${mapsSearch('天文館 駐車場')}`,
+          ]);
+        }
+        if (/吃|餐|美食|居酒屋|咖啡/.test(title + type)) {
+          return joinMemo([
+            '天文館用餐先查是否要訂位和排隊；吃完可順路補藥妝/伴手禮，回飯店前再買飲料或宵夜。',
+            `餐廳候補：${mapsSearch('天文館 黒豚 居酒屋 白熊')}`,
+          ]);
+        }
+        return joinMemo([
+          '天文館是鹿兒島市區彈性最高的區域，適合拿來吃飯、逛街、補買；先停好車或確認大眾交通再步行串點。',
+          `天文館地圖：${mapsSearch('天文館 鹿児島 駐車場 グルメ')}`,
+        ]);
+      }
+
+      if (/花火|火花|錦江湾|サマーナイト/.test(text)) {
+        return fixedTime
+          ? joinMemo([`${fixedTime} 開始，建議提早到港灣周邊卡位；散場先約好集合點和回飯店方式，現場人多時不要邊走邊找路。`, `會場周邊：${mapsSearch('鹿児島 錦江湾 サマーナイト 花火 会場 駐車場')}`])
+          : joinMemo(['花火大會建議提早到港灣周邊卡位；先決定散場集合點、回飯店方式，包包放行動電源、飲水、防蚊。', `會場周邊：${mapsSearch('鹿児島 錦江湾 サマーナイト 花火 会場 駐車場')}`]);
+      }
+
+      if (/櫻島|桜島|SUP|獨木舟|渡輪/.test(text)) {
+        if (/SUP|獨木舟|舟|船/.test(title + note)) {
+          return joinMemo([
+            '水上活動很吃天氣和風浪，前一晚確認是否成行、集合點、服裝與防水袋；若取消可改湯之平展望所、溶岩步道或足湯。',
+            `櫻島備案：${mapsSearch('桜島 湯之平展望所 溶岩なぎさ公園 足湯')}`,
+          ]);
+        }
+        if (/渡輪|フェリー/.test(title + note)) {
+          return joinMemo([
+            '搭櫻島渡輪先確認車是否要上船、付款方式和下船後路線；船班密集但仍要留排隊與上下船時間。',
+            `官方船班/料金：${SAKURAJIMA_FERRY_URL}`,
+            `鹿兒島港導航：${mapsDirections('桜島フェリー 鹿児島港')}`,
+          ]);
+        }
+        return joinMemo([
+          '櫻島可用渡輪銜接市區，順路點可排湯之平展望所、溶岩步道、道之驛和足湯；火山灰大時縮短戶外停留。',
+          `櫻島順路點：${mapsSearch('桜島 湯之平展望所 道の駅 溶岩なぎさ公園 足湯')}`,
+          `官方船班/料金：${SAKURAJIMA_FERRY_URL}`,
+        ]);
+      }
+
+      if (/霧島神宮/.test(text)) {
+        return joinMemo([
+          '霧島神宮在山區，開車時間容易比地圖預估久；可順路看丸尾瀑布、霧島溫泉市場或找咖啡休息，雨天就縮短停留。',
+          `停車/導航：${mapsSearch('霧島神宮 駐車場')}`,
+        ]);
+      }
+
+      if (/仙巖園/.test(text)) {
+        return joinMemo([
+          '仙巖園適合慢慢看庭園和櫻島景，建議預留拍照、伴手禮和旁邊尚古集成館時間；若當天還跑櫻島，別排太晚。',
+          `停車/導航：${mapsSearch('仙巌園 駐車場')}`,
+        ]);
+      }
+
+      if (/水族館|いおワールド|Io World|水館/.test(text)) {
+        return joinMemo([
+          '鹿兒島水族館適合當作市區室內備案，太熱或下雨時很好用；可和港邊、櫻島渡輪或天文館安排在同一天。',
+          `停車/導航：${mapsSearch('いおワールドかごしま水族館 駐車場')}`,
+        ]);
+      }
+
+      if (/池田湖/.test(text)) {
+        return joinMemo([
+          '池田湖適合短停拍照和休息，可和唐船峽、西大山站、長崎鼻一起順路；天氣差就不要硬拉長停留。',
+          `停車/導航：${mapsSearch('池田湖 駐車場')}`,
+        ]);
+      }
+
+      if (/長崎鼻/.test(text)) {
+        return joinMemo([
+          '長崎鼻是指宿南端順路點，晴天視野好再多停；可和西大山站、池田湖、唐船峽排同線，留意回飯店車程。',
+          `停車/導航：${mapsSearch('長崎鼻 指宿 駐車場')}`,
+        ]);
+      }
+
+      if (/景點|觀光|神宮|水館|火山|公園|展望|庭園/.test(text)) {
+        return joinMemo([
+          '這類戶外點先看天氣和停車位置；若太熱或下雨，就縮短拍照停留，改排水族館、咖啡店或商店街作室內備案。',
+          location ? `停車/導航：${mapsSearch(`${location} 駐車場`)}` : '',
+        ]);
+      }
+
+      if (/逛街|購物|商店|市場/.test(text)) {
+        return joinMemo([
+          '先標主要想逛的店，避免現場亂走耗體力；伴手禮可先拍照比價，最後一天在天文館或車站再補買。',
+          location ? `周邊停車/商店：${mapsSearch(`${location} 駐車場 買い物`)}` : `鹿兒島伴手禮：${mapsSearch('鹿児島 お土産 天文館 中央駅')}`,
+        ]);
+      }
+
+      if (/夜生活/.test(text)) {
+        return '晚上先確認回飯店方式和叫車選項；若在天文館，可把居酒屋/酒吧集中同區，避免深夜再換交通工具。';
+      }
+
+      if (/辦事/.test(text)) {
+        return '把預約截圖、護照/證件、付款方式和地址放在同一個手機資料夾，現場會省很多時間。';
+      }
+
+      if (/放空|亂晃|活動/.test(text)) {
+        return '這段拿來吸收延誤最剛好；前一晚依所在區域存 2 個候補點，例如咖啡、藥妝、超市或短時間景點。';
+      }
+
+      return '先看這個點附近是否能和吃飯、咖啡或短景點串成一區；不要只為單一地點繞路，開車行程要留停車和回程時間。';
+    }
+
+    function dayContext(item, allItems) {
+      const sameDay = allItems
+        .filter(entry => entry.date === item.date)
+        .sort((a, b) => Number(a.rowIndex || 0) - Number(b.rowIndex || 0));
+      const index = sameDay.findIndex(entry => Number(entry.rowIndex) === Number(item.rowIndex));
+      const previous = index > 0 ? sameDay[index - 1] : null;
+      const next = index !== -1 && index < sameDay.length - 1 ? sameDay[index + 1] : null;
+      const dayText = sameDay.map(entry => `${entry.type || ''} ${entry.title || ''} ${entry.location || ''} ${entry.note || ''}`).join(' ');
+      const sameDayArea = detectArea(dayText);
+
+      return {
+        sameDay,
+        previous,
+        next,
+        dayText,
+        sameDayArea,
+        hasLaterOutdoor: sameDay.slice(index + 1).some(entry => /池田湖|長崎鼻|西大山|櫻島|桜島|神宮|公園|展望|庭園|火山|海|湖/.test(`${entry.title || ''} ${entry.location || ''} ${entry.type || ''}`)),
+      };
+    }
+
+    function detectArea(text) {
+      if (/指宿|唐船|西大山|池田湖|長崎鼻|白水館|砂蒸/.test(text)) return '指宿';
+      if (/天文館|中央駅|中央站|水族館|仙巖園|港|錦江湾/.test(text)) return '鹿兒島市區';
+      if (/櫻島|桜島|渡輪|湯之平|溶岩/.test(text)) return '櫻島';
+      if (/霧島|旅行人山莊|神宮|丸尾|溫泉市場|温泉市場/.test(text)) return '霧島';
+      return '';
+    }
+
+    function nearbyFromContext(context, names) {
+      const found = names.filter(name => context.dayText.indexOf(name) !== -1);
+      if (!found.length) return '';
+      return `同天已有 ${found.join('、')}，可以排成同一條順路動線，避免來回繞路。`;
+    }
+
+    function joinMemo(parts) {
+      return parts.filter(Boolean).join('\n');
+    }
+
+    function mapsSearch(query) {
+      return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+    }
+
+    function mapsDirections(destination) {
+      return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}&travelmode=driving`;
+    }
+
+    function clean(value) {
+      const text = String(value || '').trim();
+      if (!text || text === '附註' || text === '備註' || text === '-') return '';
+      return text;
+    }
+
+    function unique(items) {
+      return [...new Set(items.filter(Boolean))];
+    }
+
+    function normalizeTimeText(value) {
+      const text = String(value || '').trim();
+      const match = text.match(/(?:上午|下午|AM|PM)?\s*(\d{1,2}):(\d{2})(?::\d{2})?\s*(?:上午|下午|AM|PM)?/i);
+      if (!match) return text;
+      const isPm = /下午|PM/i.test(text);
+      const isAm = /上午|AM/i.test(text);
+      let hour = Number(match[1]);
+      if (isPm && hour < 12) hour += 12;
+      if (isAm && hour === 12) hour = 0;
+      return `${String(hour).padStart(2, '0')}:${match[2]}`;
+    }
+
+    function textNode(value) {
+      const span = document.createElement('span');
+      span.textContent = value;
+      return span;
+    }
+
+    function setStatus(message) {
+      $('#status').textContent = message;
+    }
+
+    function setBusy(isBusy, message) {
+      $('#load').disabled = isBusy;
+      $('#save').disabled = isBusy || !state.items.length;
+      if (message) setStatus(message);
+    }
+  </script>
+</body>
+</html>

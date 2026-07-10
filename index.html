@@ -130,10 +130,10 @@
     .panel.active { display: block; }
 
     .day-title {
-      display: flex;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
       align-items: end;
-      justify-content: space-between;
-      gap: 12px;
+      gap: 10px;
       margin: 6px 2px 14px;
     }
 
@@ -142,11 +142,39 @@
       font-size: 1.05rem;
     }
 
-    .day-title span {
+    .day-tools {
+      display: inline-flex;
+      align-items: center;
+      justify-content: end;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .day-count {
       color: var(--muted);
       font-size: 0.82rem;
       font-weight: 650;
       white-space: nowrap;
+    }
+
+    .ai-tool-link {
+      width: 36px;
+      height: 36px;
+      display: inline-grid;
+      place-items: center;
+      border: 1px solid #d9e8df;
+      border-radius: 12px;
+      background: #f7fbf8;
+      color: #2f6f73;
+      font: inherit;
+      cursor: pointer;
+      text-decoration: none;
+      box-shadow: 0 4px 12px rgba(73, 54, 33, 0.06);
+    }
+
+    .ai-tool-link svg {
+      width: 18px;
+      height: 18px;
     }
 
     .card {
@@ -255,6 +283,29 @@
       font-weight: 900;
       letter-spacing: 0;
       text-transform: uppercase;
+    }
+
+    .memo-link-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 7px;
+    }
+
+    .memo-link-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      min-height: 30px;
+      padding: 5px 9px;
+      border: 1px solid #cfe2d8;
+      border-radius: 999px;
+      background: #fffdf8;
+      color: #2f6f73;
+      font-size: 0.78rem;
+      font-weight: 900;
+      line-height: 1;
+      text-decoration: none;
     }
 
     .empty, .setup {
@@ -385,6 +436,45 @@
     }
 
     .modal-backdrop.active { display: flex; }
+
+    .tool-backdrop {
+      padding: max(10px, env(safe-area-inset-top)) 10px max(10px, env(safe-area-inset-bottom));
+    }
+
+    .tool-modal {
+      position: relative;
+      width: min(100%, 820px);
+      height: min(92dvh, 900px);
+      overflow: hidden;
+      border-radius: 18px;
+      background: #fffdf8;
+      box-shadow: 0 22px 70px rgba(0, 0, 0, 0.28);
+    }
+
+    .tool-close {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 2;
+      width: 38px;
+      height: 38px;
+      border: 1px solid rgba(231, 222, 210, 0.92);
+      border-radius: 999px;
+      background: rgba(255, 253, 248, 0.94);
+      color: var(--ink);
+      font-size: 1.35rem;
+      font-weight: 850;
+      line-height: 1;
+      cursor: pointer;
+      box-shadow: 0 6px 18px rgba(73, 54, 33, 0.12);
+    }
+
+    .tool-frame {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      background: #f7f2e8;
+    }
 
     .modal {
       width: min(100%, 430px);
@@ -536,6 +626,8 @@
 
     @media (max-width: 420px) {
       main { padding: 14px; }
+      .day-title { gap: 8px; }
+      .day-count { font-size: 0.78rem; }
       .card { grid-template-columns: 58px 1fr; padding: 13px; }
       .time { font-size: 0.92rem; padding-right: 9px; }
       .toolbar { grid-template-columns: 1fr; }
@@ -573,7 +665,14 @@
     <section class="panel active" id="schedule-panel">
       <div class="day-title">
         <h2 id="day-heading">行程</h2>
-        <span id="day-count"></span>
+        <div class="day-tools">
+          <span class="day-count" id="day-count"></span>
+          <button class="ai-tool-link" type="button" id="open-ai-tool" title="AI提醒產生工具" aria-label="AI提醒產生工具">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path fill="currentColor" d="m12 2 1.6 5.1L19 9l-5.4 1.9L12 16l-1.6-5.1L5 9l5.4-1.9L12 2Zm6.2 11.3.8 2.4 2.5.8-2.5.9-.8 2.4-.8-2.4-2.5-.9 2.5-.8.8-2.4ZM6.3 14.2l.7 2.1 2.2.7-2.2.8-.7 2.1-.8-2.1-2.1-.8 2.1-.7.8-2.1Z"/>
+            </svg>
+          </button>
+        </div>
       </div>
       <div id="schedule-list" class="empty">正在讀取行程...</div>
     </section>
@@ -586,6 +685,13 @@
       <div id="ledger-list" class="empty">正在讀取記帳...</div>
     </section>
   </main>
+
+  <div class="modal-backdrop tool-backdrop" id="ai-tool-modal">
+    <div class="tool-modal" role="dialog" aria-modal="true" aria-label="AI提醒產生工具">
+      <button class="tool-close" type="button" id="close-ai-tool" aria-label="關閉 AI提醒產生工具">×</button>
+      <iframe class="tool-frame" id="ai-tool-frame" title="AI提醒產生工具"></iframe>
+    </div>
+  </div>
 
   <div class="modal-backdrop" id="form-modal">
     <form class="modal" id="ledger-form">
@@ -641,9 +747,17 @@
     document.addEventListener('DOMContentLoaded', () => {
       $('#add-ledger').addEventListener('click', () => openForm());
       $('#show-stats').addEventListener('click', showStats);
+      $('#open-ai-tool').addEventListener('click', openAiTool);
+      $('#close-ai-tool').addEventListener('click', closeAiTool);
+      $('#ai-tool-modal').addEventListener('click', event => {
+        if (event.target.id === 'ai-tool-modal') closeAiTool();
+      });
       $('#cancel-form').addEventListener('click', closeForm);
       $('#close-stats').addEventListener('click', () => $('#stats-modal').classList.remove('active'));
       $('#ledger-form').addEventListener('submit', submitLedger);
+      document.addEventListener('keydown', event => {
+        if (event.key === 'Escape' && $('#ai-tool-modal').classList.contains('active')) closeAiTool();
+      });
       loadSchedule();
     });
 
@@ -764,6 +878,17 @@
       window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
     }
 
+    function openAiTool() {
+      const frame = $('#ai-tool-frame');
+      if (!frame.src) frame.src = 'ai-memo-tool.html';
+      $('#ai-tool-modal').classList.add('active');
+    }
+
+    function closeAiTool() {
+      $('#ai-tool-modal').classList.remove('active');
+      loadSchedule();
+    }
+
     function renderSchedule() {
       const items = state.schedule.filter(item => item.date === state.activeDate);
       const label = dayLabel(state.activeDate);
@@ -825,7 +950,7 @@
       if (memoText) {
         const memo = document.createElement('div');
         memo.className = 'ai-memo';
-        memo.textContent = memoText;
+        appendLinkedText(memo, memoText);
         body.appendChild(memo);
       }
 
@@ -1016,6 +1141,50 @@
       if (name === 'gino') return 'gino';
       if (name === 'danny') return 'danny';
       return '';
+    }
+
+    function appendLinkedText(container, text) {
+      const lines = String(text || '').split(/\n+/);
+      const buttons = document.createElement('div');
+      buttons.className = 'memo-link-buttons';
+
+      lines.forEach((line, index) => {
+        const url = line.match(/https?:\/\/\S+/);
+        if (url) {
+          const labelText = line.slice(0, url.index).replace(/[：:]\s*$/, '').trim();
+          buttons.appendChild(memoLinkButton(url[0], labelText));
+          return;
+        }
+
+        if (line.trim()) {
+          if (container.childNodes.length) container.appendChild(document.createTextNode('\n'));
+          container.appendChild(document.createTextNode(line.trim()));
+        } else if (index < lines.length - 1) {
+          container.appendChild(document.createTextNode('\n'));
+        }
+      });
+
+      if (buttons.childNodes.length) container.appendChild(buttons);
+    }
+
+    function memoLinkButton(url, labelText) {
+      const link = document.createElement('a');
+      link.className = 'memo-link-button';
+      link.href = url;
+      link.target = '_blank';
+      link.rel = 'noreferrer';
+      link.textContent = memoLinkLabel(labelText, url);
+      return link;
+    }
+
+    function memoLinkLabel(labelText, url) {
+      const text = `${labelText} ${url}`;
+      if (/船班|料金|ferry|sakurajima-ferry/i.test(text)) return '⛴ 船班';
+      if (/導航|dir|driving/i.test(text)) return '🚗 導航';
+      if (/停車|駐車|parking/i.test(text)) return '🅿 停車';
+      if (/餐廳|候補|グルメ|ランチ|黒豚|白熊|カフェ|居酒屋/i.test(text)) return '🍽 餐廳';
+      if (/地圖|周邊|順路|備案|maps/i.test(text)) return '📍 地圖';
+      return labelText ? `🔗 ${labelText}` : '🔗 連結';
     }
 
     function normalizeTimeText(value) {
