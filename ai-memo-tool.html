@@ -221,7 +221,7 @@
         const sourceItems = data.filter(item => item.rowIndex && (item.title || item.location || item.note));
         state.items = sourceItems.map(item => ({
           ...item,
-          generatedMemo: generateMemo(item, sourceItems),
+          generatedMemo: enrichMemo(generateMemo(item, sourceItems), item, sourceItems),
         }));
         render();
         $('#save').disabled = state.items.length === 0;
@@ -531,6 +531,83 @@
       };
     }
 
+    function enrichMemo(baseMemo, item, allItems) {
+      const context = dayContext(item, allItems);
+      const text = `${item.type || ''} ${item.title || ''} ${item.location || ''} ${item.note || ''}`;
+      const area = detectArea(text) || context.sameDayArea || '鹿兒島市區';
+      const profile = areaProfile(area);
+      const additions = [];
+      const isFood = /美食|餐|吃|拉麵|咖啡|燒肉|居酒屋|流水麵|そうめん|ランチ|カフェ/.test(text);
+      const isShopping = /逛街|購物|商店|市場|伴手禮|買/.test(text);
+      const isHotel = /住宿|check ?in|入住|飯店|旅館|INN/i.test(text);
+      const isTransit = /交通|飛機|租車|渡輪|機場|航廈/.test(text);
+
+      if (isFood) {
+        additions.push(`候補餐廳：${mapsSearch(profile.foodQuery)}`);
+        additions.push(`附近咖啡：${mapsSearch(profile.cafeQuery)}`);
+      } else if (!isTransit) {
+        additions.push(`附近咖啡：${mapsSearch(profile.cafeQuery)}`);
+      }
+
+      if (!isTransit && !isHotel) {
+        additions.push(`自駕停車：${mapsSearch(profile.parkingQuery)}`);
+      }
+
+      if (isShopping || /天文館|中央駅|中央站|空港|機場|飯店|住宿|最後|回程/.test(context.dayText + text)) {
+        additions.push(`伴手禮：${mapsSearch(profile.souvenirQuery)}`);
+      }
+
+      if (/鹿兒島市區|天文館|中央駅|中央站/.test(area + text)) {
+        additions.push(`鹿兒島名物：${mapsSearch('鹿児島 黒豚 白熊 さつま揚げ かるかん 芋焼酎')}`);
+      }
+
+      if (/指宿/.test(area + text)) {
+        additions.push(`指宿順路點：${mapsSearch('指宿 唐船峡 池田湖 長崎鼻 西大山駅')}`);
+      }
+
+      if (/霧島/.test(area + text)) {
+        additions.push(`霧島周邊：${mapsSearch('霧島 丸尾滝 霧島温泉市場 カフェ ランチ')}`);
+      }
+
+      return joinMemo(uniqueLines([baseMemo, ...additions]));
+    }
+
+    function areaProfile(area) {
+      if (area === '指宿') {
+        return {
+          foodQuery: '指宿 ランチ 海鮮 黒豚 駐車場',
+          cafeQuery: '指宿 カフェ 駐車場',
+          parkingQuery: '指宿 観光 駐車場',
+          souvenirQuery: '指宿 お土産 さつま揚げ 芋焼酎',
+        };
+      }
+
+      if (area === '櫻島') {
+        return {
+          foodQuery: '桜島 ランチ 道の駅 火の島めぐみ館',
+          cafeQuery: '桜島 カフェ 駐車場',
+          parkingQuery: '桜島 観光 駐車場 湯之平展望所',
+          souvenirQuery: '桜島 お土産 小みかん つばき 道の駅',
+        };
+      }
+
+      if (area === '霧島') {
+        return {
+          foodQuery: '霧島 ランチ 黒豚 そば 駐車場',
+          cafeQuery: '霧島 カフェ 駐車場',
+          parkingQuery: '霧島神宮 霧島温泉 駐車場',
+          souvenirQuery: '霧島 お土産 芋焼酎 霧島茶',
+        };
+      }
+
+      return {
+        foodQuery: '鹿児島市 天文館 黒豚 白熊 居酒屋 駐車場',
+        cafeQuery: '鹿児島市 天文館 カフェ 駐車場',
+        parkingQuery: '鹿児島市 天文館 駐車場',
+        souvenirQuery: '鹿児島中央駅 天文館 お土産 さつま揚げ かるかん 芋焼酎',
+      };
+    }
+
     function detectArea(text) {
       if (/指宿|唐船|西大山|池田湖|長崎鼻|白水館|砂蒸/.test(text)) return '指宿';
       if (/天文館|中央駅|中央站|水族館|仙巖園|港|錦江湾/.test(text)) return '鹿兒島市區';
@@ -547,6 +624,16 @@
 
     function joinMemo(parts) {
       return parts.filter(Boolean).join('\n');
+    }
+
+    function uniqueLines(lines) {
+      const seen = new Set();
+      return lines.filter(line => {
+        const value = String(line || '').trim();
+        if (!value || seen.has(value)) return false;
+        seen.add(value);
+        return true;
+      });
     }
 
     function mapsSearch(query) {
