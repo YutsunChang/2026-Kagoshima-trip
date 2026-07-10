@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>AI提醒產生工具</title>
+  <title>AI達達提醒產生工具</title>
   <style>
     :root {
       --ink: #2f3332;
@@ -183,14 +183,14 @@
 <body>
   <header>
     <div class="wrap">
-      <h1>AI提醒產生工具</h1>
-      <div class="sub">先產生並預覽每筆行程的 AI提醒，確認後再一次寫入行程表。</div>
+      <h1>AI達達提醒產生工具</h1>
+      <div class="sub">先產生並預覽每筆行程的 AI達達提醒，確認後再一次寫入行程表。</div>
     </div>
   </header>
 
   <main>
     <div class="actions">
-      <button type="button" id="load">讀取並產生 AI提醒</button>
+      <button type="button" id="load">讀取並產生 AI達達提醒</button>
       <button type="button" class="secondary" id="save" disabled>寫入行程表</button>
     </div>
     <div class="status" id="status">尚未讀取行程。</div>
@@ -225,7 +225,7 @@
         }));
         render();
         $('#save').disabled = state.items.length === 0;
-        setStatus(`已產生 ${state.items.length} 筆 AI提醒。可以先手動調整，再寫入行程表。`);
+        setStatus(`已產生 ${state.items.length} 筆 AI達達提醒。可以先手動調整，再寫入行程表。`);
       } catch (error) {
         setStatus(`讀取失敗：${error.message}`);
       } finally {
@@ -250,7 +250,7 @@
           method: 'POST',
           body: JSON.stringify(payload),
         });
-        setStatus(`完成，已寫入行程表 ${result.updated || payload.items.length} 筆 AI提醒。回到正式頁面重新整理就會看到。`);
+        setStatus(`完成，已寫入行程表 ${result.updated || payload.items.length} 筆 AI達達提醒。回到正式頁面重新整理就會看到。`);
       } catch (error) {
         setStatus(`寫入失敗：${error.message}`);
       } finally {
@@ -264,7 +264,7 @@
 
       if (!state.items.length) {
         $('#list').className = 'empty';
-        $('#list').textContent = '沒有可產生 AI提醒 的行程。';
+        $('#list').textContent = '沒有可產生 AI達達提醒 的行程。';
         return;
       }
 
