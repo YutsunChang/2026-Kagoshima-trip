@@ -713,8 +713,8 @@
           showPanel('schedule');
           renderTabs();
           renderSchedule();
-          const activeTab = document.querySelector('.tab.active');
-          if (activeTab) activeTab.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
+          centerActiveTab();
+          resetPageScroll();
         });
         $('#tabs').appendChild(tab);
       });
@@ -723,6 +723,8 @@
       ledgerTab.addEventListener('click', () => {
         renderTabs();
         showPanel('ledger');
+        centerActiveTab();
+        resetPageScroll();
         loadLedger();
       });
       $('#tabs').appendChild(ledgerTab);
@@ -747,6 +749,19 @@
         const tabs = [...document.querySelectorAll('.tab')];
         tabs[tabs.length - 1].classList.add('active');
       }
+    }
+
+    function centerActiveTab() {
+      const tabs = $('#tabs');
+      const activeTab = document.querySelector('.tab.active');
+      if (!tabs || !activeTab) return;
+
+      const left = activeTab.offsetLeft - (tabs.clientWidth - activeTab.clientWidth) / 2;
+      tabs.scrollTo({ left: Math.max(0, left), behavior: 'smooth' });
+    }
+
+    function resetPageScroll() {
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
     }
 
     function renderSchedule() {
