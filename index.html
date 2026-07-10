@@ -233,6 +233,30 @@
       white-space: pre-wrap;
     }
 
+    .ai-memo {
+      margin-top: 9px;
+      padding: 9px 11px;
+      border: 1px solid #dde9e3;
+      border-left: 3px solid #8eb5a8;
+      border-radius: 9px;
+      background: #f7fbf8;
+      color: #4f6c63;
+      font-size: 0.84rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+    }
+
+    .ai-memo::before {
+      content: "AI提醒";
+      display: block;
+      margin-bottom: 3px;
+      color: #6a9184;
+      font-size: 0.68rem;
+      font-weight: 900;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+
     .empty, .setup {
       padding: 22px;
       border: 1px dashed #d8cabb;
@@ -780,6 +804,14 @@
         note.className = 'note';
         note.textContent = item.note;
         body.appendChild(note);
+      }
+
+      const memoText = item.memo || item.aiMemo || item.aimemo || item['AI memo'] || item['ai memo'] || '';
+      if (memoText) {
+        const memo = document.createElement('div');
+        memo.className = 'ai-memo';
+        memo.textContent = memoText;
+        body.appendChild(memo);
       }
 
       card.append(time, body);
