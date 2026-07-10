@@ -643,17 +643,9 @@
       font: inherit;
     }
 
-    input[type="date"] {
-      height: 44px;
-      line-height: 44px;
-      padding-top: 0;
-      padding-bottom: 0;
-    }
-
-    input[type="date"]::-webkit-date-and-time-value {
-      min-height: 44px;
-      line-height: 44px;
+    .date-field {
       text-align: left;
+      cursor: pointer;
     }
 
     textarea {
@@ -666,6 +658,87 @@
       grid-template-columns: 1fr 1fr;
       gap: 10px;
       margin-top: 16px;
+    }
+
+    .modal-text {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .danger-text {
+      color: #9a4b3a;
+      font-weight: 800;
+    }
+
+    .calendar-head {
+      display: grid;
+      grid-template-columns: 40px 1fr 40px;
+      align-items: center;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .calendar-title {
+      text-align: center;
+      font-weight: 950;
+      color: var(--ink);
+    }
+
+    .calendar-nav {
+      width: 40px;
+      height: 40px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fffdf8;
+      color: var(--primary);
+      font-size: 1.2rem;
+      font-weight: 950;
+      cursor: pointer;
+    }
+
+    .calendar-weekdays,
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 6px;
+    }
+
+    .calendar-weekdays {
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 0.72rem;
+      font-weight: 850;
+      text-align: center;
+    }
+
+    .calendar-grid {
+      margin-top: 8px;
+    }
+
+    .calendar-day {
+      aspect-ratio: 1;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      background: #fffdf8;
+      color: var(--ink);
+      font-weight: 850;
+      cursor: pointer;
+    }
+
+    .calendar-day.muted {
+      opacity: 0.32;
+    }
+
+    .calendar-day.trip-day {
+      border-color: #d8c690;
+      background: #fffaf0;
+    }
+
+    .calendar-day.active {
+      border-color: var(--primary);
+      background: var(--primary);
+      color: white;
     }
 
     @media (max-width: 420px) {
@@ -759,7 +832,7 @@
       <h2 id="form-title">新增消費</h2>
       <input type="hidden" id="row-index">
       <label for="date">日期</label>
-      <input id="date" type="date" required>
+      <input class="date-field" id="date" type="text" inputmode="none" readonly required>
       <label for="item">項目</label>
       <input id="item" type="text" required placeholder="例如：黑豚炸豬排">
       <label for="who">素隨</label>
@@ -776,6 +849,38 @@
         <button class="action" type="submit" id="save-form">儲存</button>
       </div>
     </form>
+  </div>
+
+  <div class="modal-backdrop" id="date-modal">
+    <div class="modal">
+      <h2>選擇日期</h2>
+      <p class="modal-text">選一個記帳發生日期。</p>
+      <div class="calendar-head">
+        <button class="calendar-nav" type="button" id="prev-month" aria-label="上一個月">‹</button>
+        <div class="calendar-title" id="calendar-title"></div>
+        <button class="calendar-nav" type="button" id="next-month" aria-label="下一個月">›</button>
+      </div>
+      <div class="calendar-weekdays">
+        <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
+      </div>
+      <div class="calendar-grid" id="calendar-grid"></div>
+      <div class="modal-actions">
+        <button class="action muted" type="button" id="cancel-date">取消</button>
+        <button class="action secondary" type="button" id="today-date">今天</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="delete-modal">
+    <div class="modal">
+      <h2>刪除消費</h2>
+      <p class="modal-text">確定要刪除這筆消費嗎？</p>
+      <p class="modal-text danger-text" id="delete-target"></p>
+      <div class="modal-actions">
+        <button class="action muted" type="button" id="cancel-delete">取消</button>
+        <button class="action secondary" type="button" id="confirm-delete">刪除</button>
+      </div>
+    </div>
   </div>
 
   <div class="modal-backdrop scoreboard-backdrop" id="stats-modal">
@@ -803,6 +908,8 @@
       activeDate: '',
       activePanel: 'schedule',
       ledgerSort: 'newest',
+      pendingDeleteRow: null,
+      calendarMonth: '',
     };
 
     const $ = selector => document.querySelector(selector);
@@ -813,6 +920,19 @@
       $('#show-trip').addEventListener('click', () => activateSchedule());
       $('#show-ledger').addEventListener('click', () => activateLedger());
       $('#toggle-ledger-sort').addEventListener('click', toggleLedgerSort);
+      $('#date').addEventListener('click', openDatePicker);
+      $('#cancel-date').addEventListener('click', closeDatePicker);
+      $('#today-date').addEventListener('click', () => selectLedgerDate(today()));
+      $('#prev-month').addEventListener('click', () => shiftCalendarMonth(-1));
+      $('#next-month').addEventListener('click', () => shiftCalendarMonth(1));
+      $('#cancel-delete').addEventListener('click', closeDeleteConfirm);
+      $('#confirm-delete').addEventListener('click', confirmDeleteLedger);
+      $('#date-modal').addEventListener('click', event => {
+        if (event.target.id === 'date-modal') closeDatePicker();
+      });
+      $('#delete-modal').addEventListener('click', event => {
+        if (event.target.id === 'delete-modal') closeDeleteConfirm();
+      });
       $('#open-ai-tool').addEventListener('click', openAiTool);
       $('#close-ai-tool').addEventListener('click', closeAiTool);
       $('#ai-tool-modal').addEventListener('click', event => {
@@ -1085,8 +1205,19 @@
     function sortedLedger() {
       return [...state.ledger].sort((a, b) => {
         const direction = state.ledgerSort === 'newest' ? -1 : 1;
+        const aDate = ledgerDateValue(a.date);
+        const bDate = ledgerDateValue(b.date);
+        if (aDate === null && bDate !== null) return 1;
+        if (aDate !== null && bDate === null) return -1;
+        const dateDiff = aDate - bDate;
+        if (dateDiff !== 0) return dateDiff * direction;
         return (Number(a.rowIndex) - Number(b.rowIndex)) * direction;
       });
+    }
+
+    function ledgerDateValue(value) {
+      const date = parseDate(value);
+      return date ? date.getTime() : null;
     }
 
     function toggleLedgerSort() {
@@ -1127,6 +1258,63 @@
       $('#form-modal').classList.remove('active');
     }
 
+    function openDatePicker() {
+      state.calendarMonth = ($('#date').value || today()).slice(0, 7);
+      renderCalendar();
+      $('#date-modal').classList.add('active');
+    }
+
+    function closeDatePicker() {
+      $('#date-modal').classList.remove('active');
+    }
+
+    function renderCalendar() {
+      const selected = $('#date').value;
+      const tripDates = new Set(uniqueDates().map(toInputDate));
+      const [year, month] = state.calendarMonth.split('-').map(Number);
+      const firstDay = new Date(year, month - 1, 1);
+      const start = new Date(year, month - 1, 1 - firstDay.getDay());
+
+      $('#calendar-title').textContent = `${year} / ${String(month).padStart(2, '0')}`;
+      $('#calendar-grid').innerHTML = '';
+
+      for (let i = 0; i < 42; i++) {
+        const date = new Date(start);
+        date.setDate(start.getDate() + i);
+        const dateValue = formatInputDate(date);
+        const inMonth = date.getMonth() === month - 1;
+        const button = document.createElement('button');
+        button.className = [
+          'calendar-day',
+          inMonth ? '' : 'muted',
+          tripDates.has(dateValue) ? 'trip-day' : '',
+          dateValue === selected ? 'active' : '',
+        ].filter(Boolean).join(' ');
+        button.type = 'button';
+        button.textContent = String(date.getDate());
+        button.title = ledgerDateLabel(dateValue);
+        button.addEventListener('click', () => selectLedgerDate(dateValue));
+        $('#calendar-grid').appendChild(button);
+      }
+    }
+
+    function shiftCalendarMonth(delta) {
+      const [year, month] = state.calendarMonth.split('-').map(Number);
+      const next = new Date(year, month - 1 + delta, 1);
+      state.calendarMonth = `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}`;
+      renderCalendar();
+    }
+
+    function selectLedgerDate(dateValue) {
+      $('#date').value = dateValue;
+      closeDatePicker();
+    }
+
+    function ledgerDateLabel(dateValue) {
+      const label = dayLabel(dateValue);
+      return `${dateValue.replace(/-/g, '/')} ${label.weekday}`;
+    }
+
     async function submitLedger(event) {
       event.preventDefault();
       const button = $('#save-form');
@@ -1160,15 +1348,35 @@
     }
 
     async function deleteLedger(rowIndex) {
-      if (!confirm('確定要刪除這筆消費嗎？')) return;
+      const item = state.ledger.find(entry => Number(entry.rowIndex) === Number(rowIndex));
+      state.pendingDeleteRow = rowIndex;
+      $('#delete-target').textContent = item ? `${item.date || '未填日期'}｜${item.item || '未命名'}｜${yen(item.cost)}` : '';
+      $('#delete-modal').classList.add('active');
+    }
+
+    function closeDeleteConfirm() {
+      state.pendingDeleteRow = null;
+      $('#delete-modal').classList.remove('active');
+    }
+
+    async function confirmDeleteLedger() {
+      const rowIndex = state.pendingDeleteRow;
+      if (!rowIndex) return;
+      const button = $('#confirm-delete');
+      button.disabled = true;
+      button.textContent = '刪除中...';
       try {
         await request('ledger', {
           method: 'POST',
           body: JSON.stringify({ action: 'delete', rowIndex }),
         });
+        closeDeleteConfirm();
         await loadLedger();
       } catch (error) {
         alert(`刪除失敗：${error.message}`);
+      } finally {
+        button.disabled = false;
+        button.textContent = '刪除';
       }
     }
 
@@ -1209,6 +1417,10 @@
     function toInputDate(value) {
       const date = parseDate(value);
       if (!date) return today();
+      return formatInputDate(date);
+    }
+
+    function formatInputDate(date) {
       const yyyy = date.getFullYear();
       const mm = String(date.getMonth() + 1).padStart(2, '0');
       const dd = String(date.getDate()).padStart(2, '0');
