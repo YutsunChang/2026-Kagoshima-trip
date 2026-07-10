@@ -319,7 +319,7 @@
 
     .toolbar {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr 1fr auto;
       gap: 10px;
       margin-bottom: 14px;
     }
@@ -342,6 +342,14 @@
     .action.muted {
       color: var(--ink);
       background: #e8e0d5;
+    }
+
+    .sort-button {
+      min-width: 46px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      color: #4d605c;
+      background: #fffdf8;
     }
 
     .ledger-item {
@@ -630,7 +638,7 @@
       .day-count { font-size: 0.78rem; }
       .card { grid-template-columns: 58px 1fr; padding: 13px; }
       .time { font-size: 0.92rem; padding-right: 9px; }
-      .toolbar { grid-template-columns: 1fr; }
+      .toolbar { grid-template-columns: 1fr 1fr auto; }
       .scoreboard-modal { padding: 28px 22px 24px; }
       .scoreboard-grid {
         grid-template-columns: minmax(0, 1fr) 34px minmax(0, 1fr);
@@ -681,6 +689,7 @@
       <div class="toolbar">
         <button class="action" id="add-ledger">新增消費</button>
         <button class="action secondary" id="show-stats">統計</button>
+        <button class="action sort-button" type="button" id="toggle-ledger-sort" title="切換排序" aria-label="切換排序">日期↓</button>
       </div>
       <div id="ledger-list" class="empty">正在讀取記帳...</div>
     </section>
@@ -740,6 +749,7 @@
       schedule: [],
       ledger: [],
       activeDate: '',
+      ledgerSort: 'newest',
     };
 
     const $ = selector => document.querySelector(selector);
@@ -747,6 +757,7 @@
     document.addEventListener('DOMContentLoaded', () => {
       $('#add-ledger').addEventListener('click', () => openForm());
       $('#show-stats').addEventListener('click', showStats);
+      $('#toggle-ledger-sort').addEventListener('click', toggleLedgerSort);
       $('#open-ai-tool').addEventListener('click', openAiTool);
       $('#close-ai-tool').addEventListener('click', closeAiTool);
       $('#ai-tool-modal').addEventListener('click', event => {
@@ -961,6 +972,7 @@
     function renderLedger() {
       $('#ledger-list').innerHTML = '';
       $('#ledger-list').className = '';
+      updateLedgerSortButton();
 
       if (!state.ledger.length) {
         $('#ledger-list').className = 'empty';
@@ -968,7 +980,7 @@
         return;
       }
 
-      state.ledger.forEach(item => {
+      sortedLedger().forEach(item => {
         const row = document.createElement('article');
         row.className = 'ledger-item';
 
@@ -1009,6 +1021,26 @@
         row.append(info, side);
         $('#ledger-list').appendChild(row);
       });
+    }
+
+    function sortedLedger() {
+      return [...state.ledger].sort((a, b) => {
+        const direction = state.ledgerSort === 'newest' ? -1 : 1;
+        return (Number(a.rowIndex) - Number(b.rowIndex)) * direction;
+      });
+    }
+
+    function toggleLedgerSort() {
+      state.ledgerSort = state.ledgerSort === 'newest' ? 'oldest' : 'newest';
+      renderLedger();
+    }
+
+    function updateLedgerSortButton() {
+      const button = $('#toggle-ledger-sort');
+      const newest = state.ledgerSort === 'newest';
+      button.textContent = newest ? '日期↓' : '日期↑';
+      button.title = newest ? '目前：日期新到舊，點擊改成日期舊到新' : '目前：日期舊到新，點擊改成日期新到舊';
+      button.setAttribute('aria-label', button.title);
     }
 
     function iconButton(label, text) {
